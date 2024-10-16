@@ -5,6 +5,7 @@ using Color = System.ConsoleColor;
 
 class Program
 {
+    // List to store all items
     static List<Item> items = new List<Item>();
 
     static void Main()
@@ -54,16 +55,16 @@ class Program
         switch (choice)
         {
             case "1":
-                Item.AddIncome();
+                AddIncome();
                 break;
             case "2":
-                Item.AddExpense();
+                AddExpense();
                 break;
             case "3":
-                Item.ViewItems();
+                ViewItems();
                 break;
             case "4":
-                Item.DeleteItem();
+                DeleteItem();
                 break;
             default:
                 Print("\nInvalid choice. Please try again.", Color.Red);
@@ -71,81 +72,102 @@ class Program
         }
     }
 
-    class Item
+    public static void AddIncome()
     {
-        public static List<Item> items = new List<Item>();
-        public string Title { get; set; }
-        public decimal Amount { get; set; }
-        public string Month { get; set; }
-
-        public Item(string title, decimal amount, string month)
+        Print("\nEnter income title: ", Color.Gray);
+        string title = Console.ReadLine();
+        Print("\nEnter income amount: ", Color.Gray);
+        decimal amount;
+        while (!decimal.TryParse(Console.ReadLine(), out amount))
         {
-            Title = title;
-            Amount = amount;
-            Month = month;
+            Print("Invalid amount. Please enter a valid number.", Color.Red);
+        }
+        Print("\nEnter income month: ", Color.Gray);
+        string month = Console.ReadLine();
+        items.Add(new Item(title, amount, month));
+        Print("\nIncome added successfully!", Color.Green);
+    }
+
+    public static void AddExpense()
+    {
+        Print("\nEnter expense title: ", Color.Gray);
+        string title = Console.ReadLine();
+        Print("\nEnter expense amount: ", Color.Gray);
+        decimal amount;
+        while (!decimal.TryParse(Console.ReadLine(), out amount))
+        {
+            Print("Invalid amount. Please enter a valid number.", Color.Red);
+        }
+        Print("\nEnter expense month: ", Color.Gray);
+        string month = Console.ReadLine();
+        items.Add(new Item(title, amount, month, false));
+        Print("\nExpense added successfully!", Color.Green);
+    }
+
+    public static void ViewItems()
+    {
+        if (items.Count == 0)
+        {
+            Print("\nNo items available.\n", Color.Yellow);
+            return;
         }
 
-        public static void AddIncome()
-        {
-            Print("\nEnter income title: ", Color.Gray);
-            string title = Console.ReadLine();
-            Print("\nEnter income amount: ", Color.Gray);
-            decimal amount;
-            while (!decimal.TryParse(Console.ReadLine(), out amount))
-            {
-                Print("Invalid amount. Please enter a valid number.", Color.Red);
-            }
-            Print("\nEnter income month: ", Color.Gray);
-            string month = Console.ReadLine();
-            items.Add(new Item(title, amount, month));
-            Print("\nIncome added successfully!", Color.Green);
-        }
+        Print("\nCurrent Items:\n", Color.DarkGreen);
 
-        public static void AddExpense()
-        {
-            Print("\nEnter expense title: ", Color.Gray);
-            string title = Console.ReadLine();
-            Print("\nEnter expense amount: ", Color.Gray);
-            decimal amount;
-            while (!decimal.TryParse(Console.ReadLine(), out amount))
-            {
-                Print("Invalid amount. Please enter a valid number.", Color.Red);
-            }
-            Print("\nEnter expense month: ", Color.Gray);
-            string month = Console.ReadLine();
-            items.Add(new Item(title, amount, month));
-            Print("\nExpense added successfully!", Color.Green);
-        }
+        decimal totalIncome = 0;
+        decimal totalExpense = 0;
 
-        public static void ViewItems()
+        foreach (var item in items)
         {
-            if (items.Count == 0)
-            {
-                Print("\nNo items available.\n", Color.Yellow);
-                return;
-            }
+            Print($"- {item.Title}: ${item.Amount:F2} ({item.Month})", item.IsIncome ? Color.Green : Color.Red);
 
-            Print("\nCurrent Items:\n", Color.DarkGreen);
-            foreach (var item in items)
+            // Sum based on whether the item is income or expense
+            if (item.IsIncome)
             {
-                Print($"- {item.Title}: ${item.Amount:F2} ({item.Month})", Color.White);
-            }
-        }
-
-        public static void DeleteItem()
-        {
-            Print("\nEnter the title of the item you want to delete: ", Color.Gray);
-            string title = Console.ReadLine();
-            var itemToRemove = items.FirstOrDefault(i => i.Title.Equals(title, StringComparison.OrdinalIgnoreCase));
-            if (itemToRemove != null)
-            {
-                items.Remove(itemToRemove);
-                Print("\nItem deleted successfully!", Color.Red);
+                totalIncome += item.Amount;
             }
             else
             {
-                Print("\nItem not found.", Color.Red);
+                totalExpense += item.Amount;
             }
         }
+
+        // Display totals
+        Print($"\nTotal income: ${totalIncome:F2}", Color.Green);
+        Print($"Total expense: ${totalExpense:F2}", Color.Red);
     }
+
+
+    public static void DeleteItem()
+    {
+        Print("\nEnter the title of the item you want to delete: ", Color.Gray);
+        string title = Console.ReadLine();
+        var itemToRemove = items.FirstOrDefault(i => i.Title.Equals(title, StringComparison.OrdinalIgnoreCase));
+        if (itemToRemove != null)
+        {
+            items.Remove(itemToRemove);
+            Print("\nItem deleted successfully!", Color.Red);
+        }
+        else
+        {
+            Print("\nItem not found.", Color.Red);
+        }
+    }
+}
+
+class Item
+{
+    public string Title { get; set; }
+    public decimal Amount { get; set; }
+    public string Month { get; set; }
+    public bool IsIncome { get; set; }
+
+    public Item(string title, decimal amount, string month, bool isIncome = true)
+    {
+        Title = title;
+        Amount = amount;
+        Month = month;
+        IsIncome = isIncome;
+    }
+
 }
