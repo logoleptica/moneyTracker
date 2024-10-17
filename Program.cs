@@ -29,10 +29,17 @@ class Program
 
     public static void Print(string message, Color color = Color.White)
     {
-        Console.BackgroundColor = color;
+        Console.ForegroundColor = color;
         Console.WriteLine(message); // WriteLine to avoid staying on the same line
         Console.ResetColor();
     }
+    public static decimal CalculateCurrentBalance()
+    {
+        decimal totalIncome = items.Where(i => i.IsIncome).Sum(i => i.Amount);
+        decimal totalExpense = items.Where(i => !i.IsIncome).Sum(i => i.Amount);
+        return totalIncome - totalExpense;
+    }
+
 
     public static void Greeting()
     {
@@ -41,15 +48,18 @@ class Program
 
     public static void DisplayMenu()
     {
+        Print($"\nCurrent Balance: ${CalculateCurrentBalance():F2}", Color.Yellow); // Display current balance
+
         Print("\n>>> Choose an option:");
-        Print("1) Add income", Color.Gray);
-        Print("2) Add expense", Color.Gray);
-        Print("3) View items", Color.Gray);
-        Print("4) Delete item", Color.Gray);
-        Print("5) Exit", Color.Blue);
+        Print(">>>1) Add income", Color.Gray);
+        Print(">>>2) Add expense", Color.Gray);
+        Print(">>>3) View items", Color.Gray);
+        Print(">>>4) Delete item", Color.Gray);
+        Print(">>>5) Exit");
         Print("\nEnter your option number: ", Color.Blue);
     }
 
+    //choosing option number
     public static void HandleInput(string choice)
     {
         switch (choice)
@@ -64,18 +74,20 @@ class Program
                 ViewItems();
                 break;
             case "4":
-                DeleteItem();
+                DeleteOrEditItem();
                 break;
             default:
                 Print("\nInvalid choice. Please try again.", Color.Red);
                 break;
         }
     }
-
+    //adding the income 
     public static void AddIncome()
     {
         Print("\nEnter income title: ", Color.Gray);
+        Console.ResetColor();
         string title = Console.ReadLine();
+        Console.ResetColor();
         Print("\nEnter income amount: ", Color.Gray);
         decimal amount;
         while (!decimal.TryParse(Console.ReadLine(), out amount))
@@ -87,7 +99,7 @@ class Program
         items.Add(new Item(title, amount, month));
         Print("\nIncome added successfully!", Color.Green);
     }
-
+    //adding the expense 
     public static void AddExpense()
     {
         Print("\nEnter expense title: ", Color.Gray);
@@ -103,7 +115,7 @@ class Program
         items.Add(new Item(title, amount, month, false));
         Print("\nExpense added successfully!", Color.Green);
     }
-
+    //viewing items
     public static void ViewItems()
     {
         if (items.Count == 0)
@@ -112,16 +124,66 @@ class Program
             return;
         }
 
+        Print("\nChoose a filter option:");
+        Print(">>> 1) View all items", Color.Gray);
+        Print(">>> 2) View only income", Color.Gray);
+        Print(">>> 3) View only expenses", Color.Gray);
+        Print("Enter your choice: ", Color.Blue);
+
+        string filterChoice = Console.ReadLine();
+
+        IEnumerable<Item> filteredItems;
+
+        switch (filterChoice)
+        {
+            case "1":
+                filteredItems = items; // All items
+                break;
+            case "2":
+                filteredItems = items.Where(i => i.IsIncome); // Only incomes
+                break;
+            case "3":
+                filteredItems = items.Where(i => !i.IsIncome); // Only expenses
+                break;
+            default:
+                Print("\nInvalid choice. Returning to menu.", Color.Red);
+                return;
+        }
+
+        // Now prompt for sorting options
+        Print("\nChoose a sorting option:");
+        Print(">>> 1) Sort by title", Color.Gray);
+        Print(">>> 2) Sort by amount", Color.Gray);
+        Print(">>> 3) Sort by month", Color.Gray);
+        Print("Enter your choice: ", Color.Blue);
+
+        string sortChoice = Console.ReadLine();
+        switch (sortChoice)
+        {
+            case "1":
+                filteredItems = filteredItems.OrderBy(i => i.Title); // Sort by title
+                break;
+            case "2":
+                filteredItems = filteredItems.OrderBy(i => i.Amount); // Sort by amount
+                break;
+            case "3":
+                filteredItems = filteredItems.OrderBy(i => i.Month); // Sort by month
+                break;
+            default:
+                Print("\nInvalid choice. Returning to menu.", Color.Red);
+                return;
+        }
+
         Print("\nCurrent Items:\n", Color.DarkGreen);
 
         decimal totalIncome = 0;
         decimal totalExpense = 0;
 
-        foreach (var item in items)
+        foreach (var item in filteredItems)
         {
             Print($"- {item.Title}: ${item.Amount:F2} ({item.Month})", item.IsIncome ? Color.Green : Color.Red);
 
-            // Sum based on whether the item is income or expense
+            // Sum based on if the item is income or expense
             if (item.IsIncome)
             {
                 totalIncome += item.Amount;
@@ -135,25 +197,75 @@ class Program
         // Display totals
         Print($"\nTotal income: ${totalIncome:F2}", Color.Green);
         Print($"Total expense: ${totalExpense:F2}", Color.Red);
+        Print($"Net balance: ${totalIncome - totalExpense:F2}", Color.Yellow);
     }
 
-
-    public static void DeleteItem()
+    //delete or edit
+    public static void DeleteOrEditItem()
     {
-        Print("\nEnter the title of the item you want to delete: ", Color.Gray);
+        Print("\nEnter the title of the item you want to delete or edit: ", Color.Gray);
         string title = Console.ReadLine();
-        var itemToRemove = items.FirstOrDefault(i => i.Title.Equals(title, StringComparison.OrdinalIgnoreCase));
-        if (itemToRemove != null)
+        var itemToEditOrRemove = items.FirstOrDefault(i => i.Title.Equals(title, StringComparison.OrdinalIgnoreCase));
+
+        if (itemToEditOrRemove != null)
         {
-            items.Remove(itemToRemove);
-            Print("\nItem deleted successfully!", Color.Red);
+            Print($"\nItem found: {itemToEditOrRemove.Title}: ${itemToEditOrRemove.Amount:F2} ({itemToEditOrRemove.Month})", Color.White);
+            Print("\nWould you like to (1) Edit or (2) Delete this item? Enter 1 or 2:", Color.Gray);
+            string choice = Console.ReadLine();
+
+            if (choice == "1")
+            {
+                EditItem(itemToEditOrRemove);
+            }
+            else if (choice == "2")
+            {
+                items.Remove(itemToEditOrRemove);
+                Print("\nItem deleted successfully!", Color.Red);
+            }
+            else
+            {
+                Print("\nInvalid choice. Returning to menu.", Color.Red);
+            }
         }
         else
         {
             Print("\nItem not found.", Color.Red);
         }
     }
+
+    private static void EditItem(Item itemToEdit)
+    {
+        Print("\nEditing item...");
+
+        Print("\nEnter new title (leave blank to keep current): ", Color.Gray);
+        string newTitle = Console.ReadLine();
+        if (!string.IsNullOrWhiteSpace(newTitle))
+        {
+            itemToEdit.Title = newTitle;
+        }
+
+        Print("\nEnter new amount (leave blank to keep current): ", Color.Gray);
+        string newAmountInput = Console.ReadLine();
+        if (decimal.TryParse(newAmountInput, out decimal newAmount))
+        {
+            itemToEdit.Amount = newAmount;
+        }
+
+        Print("\nEnter new month (leave blank to keep current): ", Color.Gray);
+        string newMonth = Console.ReadLine();
+        if (!string.IsNullOrWhiteSpace(newMonth))
+        {
+            itemToEdit.Month = newMonth;
+        }
+
+        Print("\nItem updated successfully!", Color.Green);
+    }
+
+
+
 }
+
+
 
 class Item
 {
