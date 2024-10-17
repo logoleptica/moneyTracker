@@ -211,7 +211,7 @@ class Program
         }
         else
         {
-            // For months, always sort in the fixed order from January to December
+            // From January to December
             filteredItems = filteredItems.OrderBy(i => ConvertMonthToNumber(i.Month));
         }
 
