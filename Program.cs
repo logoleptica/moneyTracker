@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Color = System.ConsoleColor;
+using System.IO;
 
 class Program
 {
@@ -10,20 +11,25 @@ class Program
 
     static void Main()
     {
-        Greeting();
+        string filePath = "items.csv"; // Define your file path
+
+        LoadItemsFromFile(filePath); // Load items at the start
+
+        Greeting(); // Display greeting
 
         while (true)
         {
             DisplayMenu();
-            string choice = Console.ReadLine(); // Read the input here and pass it to HandleInput
+            string choice = Console.ReadLine();
 
-            if (choice == "5") // Check if user wants to exit before handling input
+            if (choice == "5") // Exit option
             {
+                SaveItemsToFile(filePath); // Save items before exiting
                 Print("\nExiting the program...");
                 break;
             }
 
-            HandleInput(choice); // Pass the user's input to HandleInput
+            HandleInput(choice); // Handle user input
         }
     }
 
@@ -33,13 +39,13 @@ class Program
         Console.WriteLine(message); // WriteLine to avoid staying on the same line
         Console.ResetColor();
     }
+
     public static decimal CalculateCurrentBalance()
     {
         decimal totalIncome = items.Where(i => i.IsIncome).Sum(i => i.Amount);
         decimal totalExpense = items.Where(i => !i.IsIncome).Sum(i => i.Amount);
         return totalIncome - totalExpense;
     }
-
 
     public static void Greeting()
     {
@@ -51,15 +57,14 @@ class Program
         Print($"\nCurrent Balance: ${CalculateCurrentBalance():F2}", Color.Yellow); // Display current balance
 
         Print("\n>>> Choose an option:");
-        Print(">>>1) Add income", Color.Gray);
-        Print(">>>2) Add expense", Color.Gray);
-        Print(">>>3) View items", Color.Gray);
-        Print(">>>4) Delete item", Color.Gray);
-        Print(">>>5) Exit");
+        Print(">>> 1) Add income", Color.Gray);
+        Print(">>> 2) Add expense", Color.Gray);
+        Print(">>> 3) View items", Color.Gray);
+        Print(">>> 4) Delete or edit item", Color.Gray);
+        Print(">>> 5) Exit");
         Print("\nEnter your option number: ", Color.Blue);
     }
 
-    //choosing option number
     public static void HandleInput(string choice)
     {
         switch (choice)
@@ -81,13 +86,11 @@ class Program
                 break;
         }
     }
-    //adding the income 
+
     public static void AddIncome()
     {
         Print("\nEnter income title: ", Color.Gray);
-        Console.ResetColor();
         string title = Console.ReadLine();
-        Console.ResetColor();
         Print("\nEnter income amount: ", Color.Gray);
         decimal amount;
         while (!decimal.TryParse(Console.ReadLine(), out amount))
@@ -96,10 +99,10 @@ class Program
         }
         Print("\nEnter income month: ", Color.Gray);
         string month = Console.ReadLine();
-        items.Add(new Item(title, amount, month));
+        items.Add(new Item(title, amount, month, true));
         Print("\nIncome added successfully!", Color.Green);
     }
-    //adding the expense 
+
     public static void AddExpense()
     {
         Print("\nEnter expense title: ", Color.Gray);
@@ -115,7 +118,7 @@ class Program
         items.Add(new Item(title, amount, month, false));
         Print("\nExpense added successfully!", Color.Green);
     }
-    //viewing items
+
     public static void ViewItems()
     {
         if (items.Count == 0)
@@ -131,7 +134,6 @@ class Program
         Print("Enter your choice: ", Color.Blue);
 
         string filterChoice = Console.ReadLine();
-
         IEnumerable<Item> filteredItems;
 
         switch (filterChoice)
@@ -150,7 +152,7 @@ class Program
                 return;
         }
 
-        // Now prompt for sorting options
+        // Sorting options
         Print("\nChoose a sorting option:");
         Print(">>> 1) Sort by title", Color.Gray);
         Print(">>> 2) Sort by amount", Color.Gray);
@@ -183,7 +185,6 @@ class Program
         {
             Print($"- {item.Title}: ${item.Amount:F2} ({item.Month})", item.IsIncome ? Color.Green : Color.Red);
 
-            // Sum based on if the item is income or expense
             if (item.IsIncome)
             {
                 totalIncome += item.Amount;
@@ -194,13 +195,11 @@ class Program
             }
         }
 
-        // Display totals
         Print($"\nTotal income: ${totalIncome:F2}", Color.Green);
         Print($"Total expense: ${totalExpense:F2}", Color.Red);
         Print($"Net balance: ${totalIncome - totalExpense:F2}", Color.Yellow);
     }
 
-    //delete or edit
     public static void DeleteOrEditItem()
     {
         Print("\nEnter the title of the item you want to delete or edit: ", Color.Gray);
@@ -261,11 +260,34 @@ class Program
         Print("\nItem updated successfully!", Color.Green);
     }
 
+    // Saving items to a file
+    public static void SaveItemsToFile(string filePath)
+    {
+        using (StreamWriter writer = new StreamWriter(filePath))
+        {
+            foreach (var item in items)
+            {
+                writer.WriteLine(item.ToCsv());
+            }
+        }
+    }
 
-
+    // Loading items from a file
+    public static void LoadItemsFromFile(string filePath)
+    {
+        if (File.Exists(filePath))
+        {
+            using (StreamReader reader = new StreamReader(filePath))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    items.Add(Item.FromCsv(line));
+                }
+            }
+        }
+    }
 }
-
-
 
 class Item
 {
@@ -282,4 +304,16 @@ class Item
         IsIncome = isIncome;
     }
 
+    // Converts item to CSV format
+    public string ToCsv()
+    {
+        return $"{Title},{Amount},{Month},{IsIncome}";
+    }
+
+    // Converts CSV back to item
+    public static Item FromCsv(string csvLine)
+    {
+        var parts = csvLine.Split(',');
+        return new Item(parts[0], decimal.Parse(parts[1]), parts[2], bool.Parse(parts[3]));
+    }
 }
