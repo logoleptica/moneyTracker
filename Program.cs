@@ -239,70 +239,92 @@ class Program
         Print($"\nTotal expenses: ${totalExpense:F2}\n\n", Color.DarkYellow);
     }
 
+
     // Delete or edit items
     // Delete or edit items
     public static void DeleteOrEditItem()
     {
-        Print("\nEnter the title of the item you want to delete or edit: ", Color.DarkGreen);
-        string title = Console.ReadLine();
-
-        var matchingItems = items.Where(i => i.Title.Equals(title, StringComparison.OrdinalIgnoreCase)).ToList();
-
-        if (!matchingItems.Any())
+        while (true) // Add loop to allow returning to the main menu
         {
-            Print("\nNo items found with that title.", Color.Red);
-            return;
-        }
+            Print("\nEnter the title of the item you want to delete or edit (or 'R' to return to the menu): ", Color.DarkGreen);
+            string title = Console.ReadLine();
 
-        Print($"\nFound {matchingItems.Count} matching item(s):\n", Color.DarkYellow);
+            if (title.Trim().ToUpper() == "R") // If user enters 'R', return to menu
+            {
+                return;
+            }
 
-        for (int i = 0; i < matchingItems.Count; i++)
-        {
-            var item = matchingItems[i];
-            Print($"{i + 1}) "); Print($"{item.Title} - ${item.Amount:F2} ({item.Month})\n", Color.DarkYellow);
-        }
+            var matchingItems = items.Where(i => i.Title.Equals(title, StringComparison.OrdinalIgnoreCase)).ToList();
 
-        Print("\nEnter the number of the item you want to delete or edit: ", Color.DarkGreen);
-        if (!int.TryParse(Console.ReadLine(), out int itemNumber) || itemNumber < 1 || itemNumber > matchingItems.Count)
-        {
-            Print("\nInvalid selection.", Color.Red);
-            return;
-        }
+            if (!matchingItems.Any())
+            {
+                Print("\nNo items found with that title. Try again or press 'R' to return to the menu.", Color.Red);
+                continue;
+            }
 
-        var selectedItem = matchingItems[itemNumber - 1];
+            Print($"\nFound {matchingItems.Count} matching item(s):\n", Color.Yellow);
 
-        Print("\nChoose an action: ", Color.DarkGreen);
-        Print("(1) Delete, (2) Edit: ");
-        string action = Console.ReadLine();
+            for (int i = 0; i < matchingItems.Count; i++)
+            {
+                var item = matchingItems[i];
+                Print($"{i + 1}) {item.Title} - ${item.Amount:F2} ({item.Month})\n", Color.Yellow);
+            }
 
-        if (action == "1") // Delete item
-        {
-            items.Remove(selectedItem);
-            Print("\nItem deleted successfully!", Color.DarkGreen);
-        }
-        else if (action == "2") // Edit item
-        {
-            Print("\nEnter new title ", Color.DarkYellow); Print("(or press Enter to keep current): ", Color.Gray);
-            string newTitle = Console.ReadLine();
-            Print("\nEnter new amount ", Color.DarkYellow); Print("(or press Enter to keep current): ", Color.Gray);
-            string amountInput = Console.ReadLine();
-            Print("\nEnter new month ", Color.DarkYellow); Print("(or press Enter to keep current): ", Color.Gray);
-            string newMonth = Console.ReadLine();
+            Print("\nEnter the number of the item you want to delete or edit (or 'R' to return to the menu): ", Color.DarkGreen);
+            string input = Console.ReadLine();
 
-            if (!string.IsNullOrEmpty(newTitle) && IsValidTitle(newTitle))
-                selectedItem.Title = newTitle;
-            if (decimal.TryParse(amountInput, out var newAmount) && newAmount > 0)
-                selectedItem.Amount = newAmount;
-            if (!string.IsNullOrEmpty(newMonth))
-                selectedItem.Month = ValidateMonthInput(newMonth);
+            if (input.Trim().ToUpper() == "R")
+            {
+                return;
+            }
 
-            Print("\nItem updated successfully!", Color.DarkGreen);
-        }
-        else
-        {
-            Print("\nInvalid choice.", Color.Red);
+            if (!int.TryParse(input, out int itemNumber) || itemNumber < 1 || itemNumber > matchingItems.Count)
+            {
+                Print("\nInvalid selection. Try again or press 'R' to return to the menu.", Color.Red);
+                continue;
+            }
+
+            var selectedItem = matchingItems[itemNumber - 1];
+
+            Print("\nChoose an action: ", Color.DarkGreen);
+            Print("(1) Delete, (2) Edit, or 'R' to return to menu: ");
+            string action = Console.ReadLine();
+
+            if (action.Trim().ToUpper() == "R")
+            {
+                return;
+            }
+
+            if (action == "1") // Delete item
+            {
+                items.Remove(selectedItem);
+                Print("\nItem deleted successfully!", Color.DarkGreen);
+            }
+            else if (action == "2") // Edit item
+            {
+                Print("\nEnter new title "); Print("(or press Enter to keep current): ", Color.Gray);
+                string newTitle = Console.ReadLine();
+                Print("\nEnter new amount "); Print("(or press Enter to keep current): ", Color.Gray);
+                string amountInput = Console.ReadLine();
+                Print("\nEnter new month "); Print("(or press Enter to keep current): ", Color.Gray);
+                string newMonth = Console.ReadLine();
+
+                if (!string.IsNullOrEmpty(newTitle) && IsValidTitle(newTitle))
+                    selectedItem.Title = newTitle;
+                if (decimal.TryParse(amountInput, out var newAmount) && newAmount > 0)
+                    selectedItem.Amount = newAmount;
+                if (!string.IsNullOrEmpty(newMonth))
+                    selectedItem.Month = ValidateMonthInput(newMonth);
+
+                Print("\nItem updated successfully!", Color.Green);
+            }
+            else
+            {
+                Print("\nInvalid choice.", Color.Red);
+            }
         }
     }
+
 
     // Delete all items
     public static void DeleteAllItems()
