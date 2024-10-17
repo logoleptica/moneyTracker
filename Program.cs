@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Color = System.ConsoleColor;
-using System.IO;
 
 class Program
 {
@@ -12,17 +12,16 @@ class Program
     static void Main()
     {
         string filePath = "items.csv"; // Define your file path
-
         LoadItemsFromFile(filePath); // Load items at the start
 
-        Greeting(); // Display greeting
+        Print("\n>>> Track Your Money Console\n", Color.DarkCyan); // Greeting
 
         while (true)
         {
             DisplayMenu();
             string choice = Console.ReadLine();
 
-            if (choice == "5") // Exit option
+            if (choice == "6") // Exit option
             {
                 SaveItemsToFile(filePath); // Save items before exiting
                 Print("\nExiting the program...");
@@ -36,10 +35,11 @@ class Program
     public static void Print(string message, Color color = Color.White)
     {
         Console.ForegroundColor = color;
-        Console.WriteLine(message); // WriteLine to avoid staying on the same line
+        Console.Write(message);
         Console.ResetColor();
     }
 
+    // Calculating and displaying the current balance
     public static decimal CalculateCurrentBalance()
     {
         decimal totalIncome = items.Where(i => i.IsIncome).Sum(i => i.Amount);
@@ -47,24 +47,21 @@ class Program
         return totalIncome - totalExpense;
     }
 
-    public static void Greeting()
-    {
-        Print("\n>>> Track Your Money Console\n", Color.DarkCyan);
-    }
-
+    // Method to display menu options
     public static void DisplayMenu()
     {
-        Print($"\nCurrent Balance: ${CalculateCurrentBalance():F2}", Color.Yellow); // Display current balance
-
+        Print($"\nCurrent Balance: ${CalculateCurrentBalance():F2}\n", Color.Yellow); // Display current balance
         Print("\n>>> Choose an option:");
-        Print(">>> 1) Add income", Color.Gray);
-        Print(">>> 2) Add expense", Color.Gray);
-        Print(">>> 3) View items", Color.Gray);
-        Print(">>> 4) Delete or edit item", Color.Gray);
-        Print(">>> 5) Exit");
-        Print("\nEnter your option number: ", Color.Blue);
+        Print("\n>>> ", Color.DarkCyan); Print("1) "); Print("Add income", Color.DarkYellow);
+        Print("\n>>> ", Color.DarkCyan); Print("2) "); Print("Add expense", Color.DarkYellow);
+        Print("\n>>> ", Color.DarkCyan); Print("3) "); Print("View items", Color.DarkYellow);
+        Print("\n>>> ", Color.DarkCyan); Print("4) "); Print("Delete or edit item", Color.DarkYellow);
+        Print("\n>>> ", Color.DarkCyan); Print("5) "); Print("Delete all items", Color.DarkYellow);
+        Print("\n>>> ", Color.DarkCyan); Print("6) "); Print("Exit", Color.DarkYellow);
+        Print("\nEnter your option number: ", Color.DarkGreen);
     }
 
+    // Method to handle input choices
     public static void HandleInput(string choice)
     {
         switch (choice)
@@ -81,42 +78,72 @@ class Program
             case "4":
                 DeleteOrEditItem();
                 break;
+            case "5":
+                DeleteAllItems();
+                break;
             default:
-                Print("\nInvalid choice. Please try again.", Color.Red);
+                Print("\nInvalid choice. Please try again.\n", Color.Red);
                 break;
         }
     }
 
-    public static void AddIncome()
+    // Validating title to allow spaces
+    public static bool IsValidTitle(string title)
     {
-        Print("\nEnter income title: ", Color.Gray);
-        string title = Console.ReadLine();
-        Print("\nEnter income amount: ", Color.Gray);
-        decimal amount;
-        while (!decimal.TryParse(Console.ReadLine(), out amount))
-        {
-            Print("Invalid amount. Please enter a valid number.", Color.Red);
-        }
-        Print("\nEnter income month: ", Color.Gray);
-        string month = Console.ReadLine();
-        items.Add(new Item(title, amount, month, true));
-        Print("\nIncome added successfully!", Color.Green);
+        return title.All(c => char.IsLetter(c) || c == ' '); // Allow letters and spaces
     }
 
+    public static string GetValidatedTitle()
+    {
+        string title;
+        do
+        {
+            Print("\nEnter title: ", Color.DarkYellow);
+            title = Console.ReadLine();
+
+            if (!IsValidTitle(title))
+            {
+                Print("Invalid title. Please use only letters (A-Z) and spaces.\n", Color.Red);
+            }
+        } while (!IsValidTitle(title));
+
+        return title;
+    }
+
+    // Method to add income and validate characters
+    public static void AddIncome()
+    {
+        string title = GetValidatedTitle();
+
+        Print("\nEnter income amount: ", Color.DarkYellow);
+        decimal amount;
+        while (!decimal.TryParse(Console.ReadLine(), out amount) || amount <= 0)
+        {
+            Print("Invalid amount. Please enter a valid positive number.\n", Color.Red);
+        }
+
+        Print("\nEnter income month: ", Color.DarkYellow);
+        string month = ValidateMonthInput(Console.ReadLine());
+        items.Add(new Item(title, amount, month, true));
+        Print("\nIncome added successfully!", Color.DarkGreen);
+    }
+
+    // Method to add expense items
     public static void AddExpense()
     {
-        Print("\nEnter expense title: ", Color.Gray);
-        string title = Console.ReadLine();
-        Print("\nEnter expense amount: ", Color.Gray);
+        string title = GetValidatedTitle();
+
+        Print("\nEnter expense amount: ", Color.DarkYellow);
         decimal amount;
-        while (!decimal.TryParse(Console.ReadLine(), out amount))
+        while (!decimal.TryParse(Console.ReadLine(), out amount) || amount <= 0)
         {
-            Print("Invalid amount. Please enter a valid number.", Color.Red);
+            Print("Invalid amount. Please enter a valid positive number.\n", Color.Red);
         }
-        Print("\nEnter expense month: ", Color.Gray);
-        string month = Console.ReadLine();
+
+        Print("\nEnter expense month: ", Color.DarkYellow);
+        string month = ValidateMonthInput(Console.ReadLine());
         items.Add(new Item(title, amount, month, false));
-        Print("\nExpense added successfully!", Color.Green);
+        Print("\nExpense added successfully!", Color.DarkGreen);
     }
 
     public static void ViewItems()
@@ -127,11 +154,11 @@ class Program
             return;
         }
 
-        Print("\nChoose a filter option:");
-        Print(">>> 1) View all items", Color.Gray);
-        Print(">>> 2) View only income", Color.Gray);
-        Print(">>> 3) View only expenses", Color.Gray);
-        Print("Enter your choice: ", Color.Blue);
+        Print("\n>>>Choose a filter option:");
+        Print("\n>>> "); Print("1) ", Color.DarkCyan); Print("View all items", Color.DarkYellow);
+        Print("\n>>> "); Print("2) ", Color.DarkCyan); Print("View only income", Color.DarkYellow);
+        Print("\n>>> "); Print("3) ", Color.DarkCyan); Print("View only expenses", Color.DarkYellow);
+        Print("\nEnter your choice: ", Color.DarkGreen);
 
         string filterChoice = Console.ReadLine();
         IEnumerable<Item> filteredItems;
@@ -152,39 +179,51 @@ class Program
                 return;
         }
 
-        // Sorting options
-        Print("\nChoose a sorting option:");
-        Print(">>> 1) Sort by title", Color.Gray);
-        Print(">>> 2) Sort by amount", Color.Gray);
-        Print(">>> 3) Sort by month", Color.Gray);
-        Print("Enter your choice: ", Color.Blue);
+        // Prompt for sorting options
+        Print("\n>>>Choose a sorting option:");
+        Print("\n>>> "); Print("1) ", Color.DarkCyan); Print("Sort by title", Color.DarkYellow);
+        Print("\n>>> "); Print("2) ", Color.DarkCyan); Print("Sort by amount", Color.DarkYellow);
+        Print("\nEnter your choice: ", Color.DarkGreen);
 
         string sortChoice = Console.ReadLine();
-        switch (sortChoice)
+        if (sortChoice != "3") // Only ask for sorting order if not sorting by month
         {
-            case "1":
-                filteredItems = filteredItems.OrderBy(i => i.Title); // Sort by title
-                break;
-            case "2":
-                filteredItems = filteredItems.OrderBy(i => i.Amount); // Sort by amount
-                break;
-            case "3":
-                filteredItems = filteredItems.OrderBy(i => i.Month); // Sort by month
-                break;
-            default:
-                Print("\nInvalid choice. Returning to menu.", Color.Red);
-                return;
+            Print("\nChoose sorting order: "); Print("(1) Ascending, (2) Descending: ", Color.DarkYellow);
+            string sortOrder = Console.ReadLine();
+            bool ascending = sortOrder == "1"; // If "1", sort ascending; else descending
+
+            switch (sortChoice)
+            {
+                case "1": // Sort by title
+                    filteredItems = ascending
+                        ? filteredItems.OrderBy(i => i.Title)
+                        : filteredItems.OrderByDescending(i => i.Title);
+                    break;
+                case "2": // Sort by amount
+                    filteredItems = ascending
+                        ? filteredItems.OrderBy(i => i.Amount)
+                        : filteredItems.OrderByDescending(i => i.Amount);
+                    break;
+                default:
+                    Print("\nInvalid sorting choice. Returning to menu.", Color.Red);
+                    return;
+            }
+        }
+        else
+        {
+            // For months, always sort in the fixed order from January to December
+            filteredItems = filteredItems.OrderBy(i => ConvertMonthToNumber(i.Month));
         }
 
-        Print("\nCurrent Items:\n", Color.DarkGreen);
-
+        // Display filtered and sorted items
+        Print("\nSorted Items:\n\n");
         decimal totalIncome = 0;
         decimal totalExpense = 0;
 
         foreach (var item in filteredItems)
         {
-            Print($"- {item.Title}: ${item.Amount:F2} ({item.Month})", item.IsIncome ? Color.Green : Color.Red);
-
+            Print($"- {item.Title}: ${item.Amount:F2} ({item.Month})\n", item.IsIncome ? Color.DarkGreen : Color.DarkYellow);
+            // Sum income and expenses
             if (item.IsIncome)
             {
                 totalIncome += item.Amount;
@@ -195,125 +234,172 @@ class Program
             }
         }
 
-        Print($"\nTotal income: ${totalIncome:F2}", Color.Green);
-        Print($"Total expense: ${totalExpense:F2}", Color.Red);
-        Print($"Net balance: ${totalIncome - totalExpense:F2}", Color.Yellow);
+        // Display totals
+        Print($"\nTotal income: ${totalIncome:F2}", Color.DarkGreen);
+        Print($"\nTotal expenses: ${totalExpense:F2}\n\n", Color.DarkYellow);
     }
 
+    // Delete or edit items
+    // Delete or edit items
     public static void DeleteOrEditItem()
     {
-        Print("\nEnter the title of the item you want to delete or edit: ", Color.Gray);
+        Print("\nEnter the title of the item you want to delete or edit: ", Color.DarkGreen);
         string title = Console.ReadLine();
-        var itemToEditOrRemove = items.FirstOrDefault(i => i.Title.Equals(title, StringComparison.OrdinalIgnoreCase));
 
-        if (itemToEditOrRemove != null)
+        var matchingItems = items.Where(i => i.Title.Equals(title, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        if (!matchingItems.Any())
         {
-            Print($"\nItem found: {itemToEditOrRemove.Title}: ${itemToEditOrRemove.Amount:F2} ({itemToEditOrRemove.Month})", Color.White);
-            Print("\nWould you like to (1) Edit or (2) Delete this item? Enter 1 or 2:", Color.Gray);
-            string choice = Console.ReadLine();
+            Print("\nNo items found with that title.", Color.Red);
+            return;
+        }
 
-            if (choice == "1")
-            {
-                EditItem(itemToEditOrRemove);
-            }
-            else if (choice == "2")
-            {
-                items.Remove(itemToEditOrRemove);
-                Print("\nItem deleted successfully!", Color.Red);
-            }
-            else
-            {
-                Print("\nInvalid choice. Returning to menu.", Color.Red);
-            }
+        Print($"\nFound {matchingItems.Count} matching item(s):\n", Color.DarkYellow);
+
+        for (int i = 0; i < matchingItems.Count; i++)
+        {
+            var item = matchingItems[i];
+            Print($"{i + 1}) "); Print($"{item.Title} - ${item.Amount:F2} ({item.Month})\n", Color.DarkYellow);
+        }
+
+        Print("\nEnter the number of the item you want to delete or edit: ", Color.DarkGreen);
+        if (!int.TryParse(Console.ReadLine(), out int itemNumber) || itemNumber < 1 || itemNumber > matchingItems.Count)
+        {
+            Print("\nInvalid selection.", Color.Red);
+            return;
+        }
+
+        var selectedItem = matchingItems[itemNumber - 1];
+
+        Print("\nChoose an action: ", Color.DarkGreen);
+        Print("(1) Delete, (2) Edit: ");
+        string action = Console.ReadLine();
+
+        if (action == "1") // Delete item
+        {
+            items.Remove(selectedItem);
+            Print("\nItem deleted successfully!", Color.DarkGreen);
+        }
+        else if (action == "2") // Edit item
+        {
+            Print("\nEnter new title ", Color.DarkYellow); Print("(or press Enter to keep current): ", Color.Gray);
+            string newTitle = Console.ReadLine();
+            Print("\nEnter new amount ", Color.DarkYellow); Print("(or press Enter to keep current): ", Color.Gray);
+            string amountInput = Console.ReadLine();
+            Print("\nEnter new month ", Color.DarkYellow); Print("(or press Enter to keep current): ", Color.Gray);
+            string newMonth = Console.ReadLine();
+
+            if (!string.IsNullOrEmpty(newTitle) && IsValidTitle(newTitle))
+                selectedItem.Title = newTitle;
+            if (decimal.TryParse(amountInput, out var newAmount) && newAmount > 0)
+                selectedItem.Amount = newAmount;
+            if (!string.IsNullOrEmpty(newMonth))
+                selectedItem.Month = ValidateMonthInput(newMonth);
+
+            Print("\nItem updated successfully!", Color.DarkGreen);
         }
         else
         {
-            Print("\nItem not found.", Color.Red);
+            Print("\nInvalid choice.", Color.Red);
         }
     }
 
-    private static void EditItem(Item itemToEdit)
+    // Delete all items
+    public static void DeleteAllItems()
     {
-        Print("\nEditing item...");
-
-        Print("\nEnter new title (leave blank to keep current): ", Color.Gray);
-        string newTitle = Console.ReadLine();
-        if (!string.IsNullOrWhiteSpace(newTitle))
+        Print("\nAre you sure you want to delete all items? (Y/N): ", Color.Red);
+        if (Console.ReadLine().Trim().ToUpper() == "Y")
         {
-            itemToEdit.Title = newTitle;
+            items.Clear();
+            Print("\nAll items deleted successfully!", Color.DarkGreen);
         }
-
-        Print("\nEnter new amount (leave blank to keep current): ", Color.Gray);
-        string newAmountInput = Console.ReadLine();
-        if (decimal.TryParse(newAmountInput, out decimal newAmount))
+        else
         {
-            itemToEdit.Amount = newAmount;
+            Print("\nDeletion canceled.", Color.DarkYellow);
         }
-
-        Print("\nEnter new month (leave blank to keep current): ", Color.Gray);
-        string newMonth = Console.ReadLine();
-        if (!string.IsNullOrWhiteSpace(newMonth))
-        {
-            itemToEdit.Month = newMonth;
-        }
-
-        Print("\nItem updated successfully!", Color.Green);
     }
 
-    // Saving items to a file
+    public static string ValidateMonthInput(string inputMonth)
+    {
+        string[] validMonths = new[]
+        {
+            "January", "February", "March", "April", "May", "June", "July",
+            "August", "September", "October", "November", "December"
+        };
+
+        while (!validMonths.Contains(inputMonth, StringComparer.OrdinalIgnoreCase))
+        {
+            Print("\nInvalid month. Please enter a valid month (e.g., January): ", Color.Red);
+            inputMonth = Console.ReadLine();
+        }
+
+        return validMonths.First(m => m.Equals(inputMonth, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public static int ConvertMonthToNumber(string month)
+    {
+        string[] validMonths = new[]
+        {
+            "January", "February", "March", "April", "May", "June", "July",
+            "August", "September", "October", "November", "December"
+        };
+
+        return Array.IndexOf(validMonths, month) + 1; // Convert month name to its number
+    }
+
+    // Method to save items to a file
     public static void SaveItemsToFile(string filePath)
     {
-        using (StreamWriter writer = new StreamWriter(filePath))
+        using (StreamWriter sw = new StreamWriter(filePath))
         {
             foreach (var item in items)
             {
-                writer.WriteLine(item.ToCsv());
+                sw.WriteLine($"\"{item.Title}\",{item.Amount},{item.Month},{item.IsIncome}");
             }
         }
+
+        Print("\nItems saved successfully!\n", Color.Green);
     }
 
-    // Loading items from a file
+    // Method to load items from a file
     public static void LoadItemsFromFile(string filePath)
     {
-        if (File.Exists(filePath))
+        if (!File.Exists(filePath))
+            return;
+
+        using (StreamReader sr = new StreamReader(filePath))
         {
-            using (StreamReader reader = new StreamReader(filePath))
+            string line;
+            while ((line = sr.ReadLine()) != null)
             {
-                string line;
-                while ((line = reader.ReadLine()) != null)
+                string[] parts = line.Split(',');
+                if (parts.Length == 4)
                 {
-                    items.Add(Item.FromCsv(line));
+                    string title = parts[0].Trim('"'); // Remove quotes from title
+                    decimal amount = decimal.Parse(parts[1]);
+                    string month = parts[2];
+                    bool isIncome = bool.Parse(parts[3]);
+
+                    items.Add(new Item(title, amount, month, isIncome));
                 }
             }
         }
     }
 }
 
-class Item
+// Item class for representing financial entries
+public class Item
 {
     public string Title { get; set; }
     public decimal Amount { get; set; }
     public string Month { get; set; }
     public bool IsIncome { get; set; }
 
-    public Item(string title, decimal amount, string month, bool isIncome = true)
+    public Item(string title, decimal amount, string month, bool isIncome)
     {
         Title = title;
         Amount = amount;
         Month = month;
         IsIncome = isIncome;
-    }
-
-    // Converts item to CSV format
-    public string ToCsv()
-    {
-        return $"{Title},{Amount},{Month},{IsIncome}";
-    }
-
-    // Converts CSV back to item
-    public static Item FromCsv(string csvLine)
-    {
-        var parts = csvLine.Split(',');
-        return new Item(parts[0], decimal.Parse(parts[1]), parts[2], bool.Parse(parts[3]));
     }
 }
