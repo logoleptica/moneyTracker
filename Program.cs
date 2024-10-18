@@ -219,12 +219,13 @@ class Program
 
         // Display filtered and sorted items
         Print("\nSorted Items:\n\n");
+        Print("\tTitle\t\tAmount\t\tMonth:\n\n");
         decimal totalIncome = 0;
         decimal totalExpense = 0;
 
         foreach (var item in filteredItems)
         {
-            Print($"- {item.Title}: ${item.Amount:F2} ({item.Month})\n", item.IsIncome ? Color.DarkGreen : Color.DarkYellow);
+            Print($"\t- {item.Title.PadRight(15)} ${item.Amount:F2}\t({item.Month})\n", item.IsIncome ? Color.DarkGreen : Color.DarkYellow);
             // Sum income and expenses
             if (item.IsIncome)
             {
