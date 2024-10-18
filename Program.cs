@@ -183,36 +183,38 @@ class Program
         Print("\n>>>Choose a sorting option:");
         Print("\n>>> "); Print("1) ", Color.DarkCyan); Print("Sort by title", Color.DarkYellow);
         Print("\n>>> "); Print("2) ", Color.DarkCyan); Print("Sort by amount", Color.DarkYellow);
+        Print("\n>>> "); Print("3) ", Color.DarkCyan); Print("Sort by month", Color.DarkYellow); // NEW OPTION
         Print("\nEnter your choice: ", Color.DarkGreen);
 
         string sortChoice = Console.ReadLine();
-        if (sortChoice != "3") // Only ask for sorting order if not sorting by month
+        bool ascending = true; // Default sorting order is ascending
+
+        // Only ask for sorting order if not sorting by month
+        if (sortChoice != "3")
         {
             Print("\nChoose sorting order: "); Print("(1) Ascending, (2) Descending: ", Color.DarkYellow);
             string sortOrder = Console.ReadLine();
-            bool ascending = sortOrder == "1"; // If "1", sort ascending; else descending
-
-            switch (sortChoice)
-            {
-                case "1": // Sort by title
-                    filteredItems = ascending
-                        ? filteredItems.OrderBy(i => i.Title)
-                        : filteredItems.OrderByDescending(i => i.Title);
-                    break;
-                case "2": // Sort by amount
-                    filteredItems = ascending
-                        ? filteredItems.OrderBy(i => i.Amount)
-                        : filteredItems.OrderByDescending(i => i.Amount);
-                    break;
-                default:
-                    Print("\nInvalid sorting choice. Returning to menu.", Color.Red);
-                    return;
-            }
+            ascending = sortOrder == "1"; // If "1", sort ascending; else descending
         }
-        else
+
+        switch (sortChoice)
         {
-            // From January to December
-            filteredItems = filteredItems.OrderBy(i => ConvertMonthToNumber(i.Month));
+            case "1": // Sort by title
+                filteredItems = ascending
+                    ? filteredItems.OrderBy(i => i.Title)
+                    : filteredItems.OrderByDescending(i => i.Title);
+                break;
+            case "2": // Sort by amount
+                filteredItems = ascending
+                    ? filteredItems.OrderBy(i => i.Amount)
+                    : filteredItems.OrderByDescending(i => i.Amount);
+                break;
+            case "3": // Sort by month (new option)
+                filteredItems = filteredItems.OrderBy(i => ConvertMonthToNumber(i.Month)); // Always ascending by month
+                break;
+            default:
+                Print("\nInvalid sorting choice. Returning to menu.", Color.Red);
+                return;
         }
 
         // Display filtered and sorted items
@@ -239,8 +241,6 @@ class Program
         Print($"\nTotal expenses: ${totalExpense:F2}\n\n", Color.DarkYellow);
     }
 
-
-    // Delete or edit items
     // Delete or edit items
     public static void DeleteOrEditItem()
     {
